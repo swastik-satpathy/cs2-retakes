@@ -4,7 +4,7 @@ META_PATH="/home/cs2server/serverfiles/game/csgo/addons/metamod"
 
 if [ -d "$META_PATH" ]; then
     echo "Metamod already installed. Skipping."
-    exit 0
+    return
 fi
 
 

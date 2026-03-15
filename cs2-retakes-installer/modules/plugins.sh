@@ -38,7 +38,7 @@ PLUGINS_JSON="$ROOT_DIR/plugins.json"
 
 if [ ! -f "$PLUGINS_JSON" ]; then
     echo "plugins.json not found. Skipping plugin installation."
-    exit 0
+    return
 fi
 
 PLUGIN_DIR="/home/cs2server/serverfiles/game/csgo/addons/counterstrikesharp/plugins"

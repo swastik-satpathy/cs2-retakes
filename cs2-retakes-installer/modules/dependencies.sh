@@ -4,9 +4,15 @@ echo "Installing CS2 / LGSM dependencies..."
 
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+
 dpkg --add-architecture i386
 
 apt update
+
+# auto-accept steamcmd license
+echo "steam steam/question select I AGREE" | debconf-set-selections
+echo "steam steam/license note ''" | debconf-set-selections
 
 apt install -y \
 bc \

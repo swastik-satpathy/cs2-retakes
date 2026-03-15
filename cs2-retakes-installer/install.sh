@@ -1,36 +1,3 @@
-# #!/bin/bash
-
-# set -euo pipefail
-
-# LOG="/var/log/cs2-installer.log"
-
-# exec > >(tee -a $LOG)
-# exec 2>&1
-
-# echo "Starting CS2 Retakes Installer"
-
-# read -p "Enter GSLT Token: " GSLT
-# read -p "Server Owner SteamID: " OWNER_STEAMID
-
-# export GSLT
-# export OWNER_STEAMID
-
-# if ! id "cs2server" &>/dev/null; then
-#     useradd -m cs2server
-# fi
-
-# cd "$(dirname "$0")"
-
-# source modules/dependencies.sh
-# source modules/lgsm.sh
-# source modules/metamod.sh
-# source modules/cssharp.sh
-# source modules/database.sh
-# source modules/cron.sh
-
-# echo "Installation complete"
-
-
 #!/bin/bash
 
 set -euo pipefail
@@ -48,11 +15,28 @@ if id "cs2server" &>/dev/null; then
   read -p "Repair existing install? (y/n): " repair
 fi
 
-if ! id "cs2server" &>/dev/null; then
-  useradd -m cs2server
+
+if [ -d "/home/cs2server/serverfiles" ]; then
+    echo "Existing CS2 installation detected."
+    read -rp "Repair installation? (y/n): " repair
+
+    if [[ "$repair" != "y" ]]; then
+        echo "Aborting install."
+        exit 1
+    fi
 fi
 
-su - cs2server
+if id "cs2server" &>/dev/null; then
+    echo "User cs2server already exists"
+else
+    echo "Creating user cs2server"
+
+    if [ -d /home/cs2server ]; then
+        useradd -d /home/cs2server -s /bin/bash cs2server
+    else
+        useradd -m -s /bin/bash cs2server
+    fi
+fi
 
 source modules/dependencies.sh
 source modules/lgsm.sh

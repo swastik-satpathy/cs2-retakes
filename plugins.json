@@ -63,7 +63,7 @@
     "installPath": "addons/counterstrikesharp/plugins",
     "dependencies": [],
     "postInstall": [],
-    "enabled": true
+    "enabled": false
   },
   "simpleadmin": {
     "name": "SimpleAdmin",

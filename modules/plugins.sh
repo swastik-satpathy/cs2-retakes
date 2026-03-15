@@ -1,58 +1,87 @@
 #!/bin/bash
 
-echo "Installing selected plugins..."
+echo "Installing plugins from plugins.json..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 PLUGINS_JSON="$ROOT_DIR/plugins.json"
 
+SERVER_DIR="/home/cs2server/serverfiles/game/csgo"
+
 if [ ! -f "$PLUGINS_JSON" ]; then
     echo "plugins.json not found. Skipping plugin installation."
     return
 fi
 
-SERVER_DIR="/home/cs2server/serverfiles/game/csgo"
-PLUGIN_DIR="$SERVER_DIR/addons/counterstrikesharp/plugins"
-
-mkdir -p "$PLUGIN_DIR"
-
 for plugin in $(jq -r 'keys[]' "$PLUGINS_JSON"); do
 
-    URL=$(jq -r ".\"$plugin\".url" "$PLUGINS_JSON")
+    ENABLED=$(jq -r ".\"$plugin\".enabled" "$PLUGINS_JSON")
 
-    if [ "$URL" = "null" ] || [ -z "$URL" ]; then
-        echo "Skipping $plugin (no URL)"
+    if [ "$ENABLED" != "true" ]; then
+        echo "Skipping $plugin (disabled)"
         continue
     fi
 
-    echo "Installing $plugin..."
+    NAME=$(jq -r ".\"$plugin\".name" "$PLUGINS_JSON")
+    URL=$(jq -r ".\"$plugin\".url" "$PLUGINS_JSON")
+    EXTRACT_PATH=$(jq -r ".\"$plugin\".extractPath" "$PLUGINS_JSON")
+    INSTALL_PATH=$(jq -r ".\"$plugin\".installPath" "$PLUGINS_JSON")
+    VERSION=$(jq -r ".\"$plugin\".version" "$PLUGINS_JSON")
+
+    echo ""
+    echo "Installing $NAME ($VERSION)"
 
     TMP_DIR="/tmp/plugin-$plugin"
+
     rm -rf "$TMP_DIR"
     mkdir -p "$TMP_DIR"
 
     cd "$TMP_DIR" || exit
 
+    echo "Downloading..."
     wget -q "$URL" -O plugin.zip
+
+    echo "Extracting..."
     unzip -q plugin.zip
 
+    SRC="$TMP_DIR/$EXTRACT_PATH"
+    DEST="$SERVER_DIR/$INSTALL_PATH"
+
+    if [ ! -d "$SRC" ]; then
+        echo "Extraction path $EXTRACT_PATH not found for $plugin"
+        continue
+    fi
+
+    mkdir -p "$DEST"
+
+    echo "Copying files..."
+    cp -r "$SRC"/* "$DEST/"
+
     ########################################
-    # Detect plugin folders by DLL
+    # Optional config copy
     ########################################
 
-    for dll in $(find . -name "*.dll"); do
+    CONFIG_FROM=$(jq -r ".\"$plugin\".configCopy.from // empty" "$PLUGINS_JSON")
+    CONFIG_TO=$(jq -r ".\"$plugin\".configCopy.to // empty" "$PLUGINS_JSON")
 
-        PLUGIN_FOLDER=$(dirname "$dll")
-        NAME=$(basename "$PLUGIN_FOLDER")
+    if [ -n "$CONFIG_FROM" ] && [ -d "$TMP_DIR/$CONFIG_FROM" ]; then
 
-        echo "Installing plugin folder: $NAME"
+        echo "Copying config files..."
 
-        rm -rf "$PLUGIN_DIR/$NAME"
-        mkdir -p "$PLUGIN_DIR/$NAME"
+        mkdir -p "$SERVER_DIR/$CONFIG_TO"
+        cp -r "$TMP_DIR/$CONFIG_FROM"/* "$SERVER_DIR/$CONFIG_TO/"
 
-        cp -r "$PLUGIN_FOLDER"/* "$PLUGIN_DIR/$NAME/"
+    fi
 
+    ########################################
+    # Post install commands
+    ########################################
+
+    echo "Running post-install commands..."
+
+    jq -r ".\"$plugin\".postInstall[]?" "$PLUGINS_JSON" | while read -r cmd; do
+        eval "$cmd"
     done
 
     cd /tmp
@@ -63,5 +92,12 @@ done
 chown -R cs2server:cs2server /home/cs2server/serverfiles
 
 echo ""
-echo "Installed plugins:"
-ls "$PLUGIN_DIR"
+echo "Plugin installation complete."
+
+PLUGIN_DIR="$SERVER_DIR/addons/counterstrikesharp/plugins"
+
+if [ -d "$PLUGIN_DIR" ]; then
+    echo ""
+    echo "Installed CounterStrikeSharp plugins:"
+    ls "$PLUGIN_DIR"
+fi

@@ -14,6 +14,35 @@ exec 2>&1
 
 echo "==== CS2 Server Manager Installer ===="
 
+
+########################################
+# Load environment configuration
+########################################
+
+ENV_LOADED="false"
+
+# Local installer env
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    echo "Loading environment from $SCRIPT_DIR/.env"
+    source "$SCRIPT_DIR/.env"
+    ENV_LOADED="true"
+
+# Repo root env
+elif [ -f "$SCRIPT_DIR/../.env" ]; then
+    echo "Loading environment from repo root .env"
+    source "$SCRIPT_DIR/../.env"
+    ENV_LOADED="true"
+
+# System env
+elif [ -f "$HOME/.cs2servermanager.env" ]; then
+    echo "Loading environment from $HOME/.cs2servermanager.env"
+    source "$HOME/.cs2servermanager.env"
+    ENV_LOADED="true"
+
+else
+    echo "No .env file found. Using defaults."
+fi
+
 source cli.sh
 
 ########################################

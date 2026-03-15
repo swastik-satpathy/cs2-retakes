@@ -115,6 +115,10 @@ fi
 # Restart server so plugins load
 ########################################
 
+echo "Fixing file ownership..."
+
+chown -R cs2server:cs2server /home/cs2server
+
 echo ""
 echo "Restarting server to activate plugins..."
 

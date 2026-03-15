@@ -1,28 +1,41 @@
-# #!/bin/bash
-
 # echo "Installing selected plugins..."
 
-# IFS=',' read -ra LIST <<< "$SELECTED_PLUGINS"
+# SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# for plugin in "${LIST[@]}"; do
+# PLUGINS_JSON="$ROOT_DIR/plugins.json"
 
-#   echo "Installing $plugin"
+# if [ ! -f "$PLUGINS_JSON" ]; then
+#     echo "plugins.json not found. Skipping plugin installation."
+#     return
+# fi
 
-#   REPO=$(jq -r ".\"$plugin\".repo" plugins.json)
+# PLUGIN_DIR="/home/cs2server/serverfiles/game/csgo/addons/counterstrikesharp/plugins"
 
-#   API="https://api.github.com/repos/$(echo $REPO | sed 's|https://github.com/||')/releases/latest"
+# mkdir -p "$PLUGIN_DIR"
 
-#   URL=$(curl -s $API | jq -r '.assets[0].browser_download_url')
+# for plugin in $(jq -r 'keys[]' "$PLUGINS_JSON"); do
 
-#   cd /tmp
+#     URL=$(jq -r ".\"$plugin\".url" "$PLUGINS_JSON")
 
-#   wget -O plugin.zip $URL
+#     if [ "$URL" = "null" ] || [ -z "$URL" ]; then
+#         echo "Skipping $plugin (no URL)"
+#         continue
+#     fi
 
-#   unzip -o plugin.zip
+#     if [ -d "$PLUGIN_DIR/$plugin" ]; then
+#         echo "$plugin already installed. Skipping."
+#         continue
+#     fi
 
-#   cp -r addons /home/cs2server/serverfiles/game/csgo/ || true
+#     echo "Installing $plugin..."
 
-#   rm -rf plugin.zip addons
+#     cd /tmp
+#     wget -q "$URL" -O plugin.zip
+
+#     unzip -o plugin.zip
+
+#     cp -r addons/* /home/cs2server/serverfiles/game/csgo/addons/
 
 # done
 
@@ -37,8 +50,8 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 PLUGINS_JSON="$ROOT_DIR/plugins.json"
 
 if [ ! -f "$PLUGINS_JSON" ]; then
-    echo "plugins.json not found. Skipping plugin installation."
-    return
+echo "plugins.json not found. Skipping plugin installation."
+return
 fi
 
 PLUGIN_DIR="/home/cs2server/serverfiles/game/csgo/addons/counterstrikesharp/plugins"
@@ -47,26 +60,70 @@ mkdir -p "$PLUGIN_DIR"
 
 for plugin in $(jq -r 'keys[]' "$PLUGINS_JSON"); do
 
-    URL=$(jq -r ".\"$plugin\".url" "$PLUGINS_JSON")
+```
+URL=$(jq -r ".\"$plugin\".url" "$PLUGINS_JSON")
 
-    if [ "$URL" = "null" ] || [ -z "$URL" ]; then
-        echo "Skipping $plugin (no URL)"
+if [ "$URL" = "null" ] || [ -z "$URL" ]; then
+    echo "Skipping $plugin (no URL)"
+    continue
+fi
+
+if [ -d "$PLUGIN_DIR/$plugin" ]; then
+    echo "$plugin already installed. Skipping."
+    continue
+fi
+
+echo ""
+echo "Processing plugin: $plugin"
+
+DOWNLOAD_URL="$URL"
+VERSION="unknown"
+
+########################################
+# Test if URL works
+########################################
+
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+
+if [ "$STATUS" != "200" ]; then
+    echo "Primary URL returned $STATUS — attempting GitHub latest release lookup..."
+
+    if [[ "$URL" =~ github.com/([^/]+)/([^/]+)/ ]]; then
+        OWNER="${BASH_REMATCH[1]}"
+        REPO="${BASH_REMATCH[2]}"
+
+        API="https://api.github.com/repos/$OWNER/$REPO/releases/latest"
+
+        VERSION=$(curl -s "$API" | jq -r '.tag_name')
+
+        DOWNLOAD_URL=$(curl -s "$API" | jq -r '.assets[] | select(.name|test("\\.zip$")) | .browser_download_url' | head -n 1)
+
+        if [ "$DOWNLOAD_URL" = "null" ] || [ -z "$DOWNLOAD_URL" ]; then
+            echo "Could not find downloadable asset for $plugin"
+            continue
+        fi
+
+    else
+        echo "Non-GitHub URL failed. Skipping $plugin"
         continue
     fi
-
-    if [ -d "$PLUGIN_DIR/$plugin" ]; then
-        echo "$plugin already installed. Skipping."
-        continue
+else
+    if [[ "$URL" =~ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+        VERSION=$(echo "$URL" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')
     fi
+fi
 
-    echo "Installing $plugin..."
+echo "Downloading $plugin ($VERSION)"
 
-    cd /tmp
-    wget -q "$URL" -O plugin.zip
+cd /tmp
+rm -f plugin.zip
 
-    unzip -o plugin.zip
+wget -q "$DOWNLOAD_URL" -O plugin.zip
 
-    cp -r addons/* /home/cs2server/serverfiles/game/csgo/addons/
+unzip -oq plugin.zip
+
+cp -r addons/* /home/cs2server/serverfiles/game/csgo/addons/
+```
 
 done
 

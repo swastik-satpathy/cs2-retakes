@@ -1,23 +1,20 @@
 {
   "retakes": {
-    "repo": "https://github.com/B3none/cs2-retakes"
+    "url": "https://github.com/B3none/cs2-retakes/releases/download/3.0.3/RetakesPlugin-3.0.3.zip"
   },
   "allocator": {
-    "repo": "https://github.com/yonilerner/cs2-retakes-allocator"
-  },
-  "instaplant": {
-    "repo": "https://github.com/B3none/cs2-instaplant"
+    "url": "https://github.com/yonilerner/cs2-retakes-allocator/releases/download/v2.4.2/cs2-retakes-allocator-v2.4.2.zip"
   },
   "instadefuse": {
-    "repo": "https://github.com/B3none/cs2-instadefuse"
-  },
-  "rtv": {
-    "repo": "https://github.com/Oz-Lin/cs2-rockthevote"
+    "url": "https://github.com/B3none/cs2-instadefuse/releases/download/2.0.0/cs2-instadefuse-2.0.0.zip"
   },
   "clutchannounce": {
-    "repo": "https://github.com/B3none/cs2-clutch-announce"
+    "url": "https://github.com/B3none/cs2-clutch-announce/releases/download/1.1.0/cs2-clutch-announce-1.1.0.zip"
+  },
+  "rtv": {
+    "url": "https://github.com/Oz-Lin/cs2-rockthevote/releases/download/v1.9.6/RockTheVote-v1.9.6.RELEASE.zip"
   },
   "simpleadmin": {
-    "repo": "https://github.com/daffyyyy/CS2-SimpleAdmin"
+    "url": "https://github.com/daffyyyy/CS2-SimpleAdmin/releases/download/build-1.7.8-beta-10b1/CS2-SimpleAdmin-1.7.8-beta-10b1.zip"
   }
 }

@@ -1,13 +1,16 @@
-echo "Setting cron jobs..."
+#!/bin/bash
 
-CRON=$(mktemp)
+echo "Configuring cron jobs..."
 
-crontab -l > $CRON || true
+CRON_USER="cs2server"
 
-echo "0 9 * * * /home/cs2server/cs2server restart" >> $CRON
-echo "0 8 * * * /home/cs2server/cs2server update" >> $CRON
-echo "0 18 * * * /home/cs2server/cs2server monitor" >> $CRON
-echo "0 9 * * 5 /home/cs2server/cs2server lgsm-update" >> $CRON
+if crontab -u $CRON_USER -l 2>/dev/null | grep -q "/home/cs2server/cs2server monitor"; then
+    echo "Cron jobs already configured. Skipping."
+    return
+fi
 
-crontab $CRON
-rm $CRON
+(crontab -u $CRON_USER -l 2>/dev/null; echo "0 7 * * * /home/cs2server/cs2server monitor") | crontab -u $CRON_USER -
+(crontab -u $CRON_USER -l 2>/dev/null; echo "0 8 * * * /home/cs2server/cs2server update") | crontab -u $CRON_USER -
+(crontab -u $CRON_USER -l 2>/dev/null; echo "0 9 * * * /home/cs2server/cs2server restart") | crontab -u $CRON_USER -
+
+echo "Cron jobs configured."

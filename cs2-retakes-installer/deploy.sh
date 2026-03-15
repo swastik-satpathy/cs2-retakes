@@ -17,7 +17,7 @@ apt update
 apt install -y git curl jq unzip
 
 rm -rf cs2-retakes-installer
-git clone https://github.com/YOUR_REPO/cs2-retakes-installer
+git clone https://github.com/swastik-satpathy/cs2-server-manager
 
 cd cs2-retakes-installer
 sudo bash install.sh

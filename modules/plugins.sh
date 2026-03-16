@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Check for required dependencies
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is required but not installed. Please install jq to continue."
+    return 1
+fi
+
+if ! command -v wget &> /dev/null; then
+    echo "Error: wget is required but not installed."
+    return 1
+fi
+
+if ! command -v unzip &> /dev/null; then
+    echo "Error: unzip is required but not installed."
+    return 1
+fi
+
 echo "Installing plugins from plugins.json..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,14 +38,10 @@ for plugin in $(jq -r 'keys[]' "$PLUGINS_JSON"); do
         continue
     fi
 
-    NAME=$(jq -r ".\"$plugin\".name" "$PLUGINS_JSON")
     URL=$(jq -r ".\"$plugin\".url" "$PLUGINS_JSON")
-    EXTRACT_PATH=$(jq -r ".\"$plugin\".extractPath" "$PLUGINS_JSON")
-    INSTALL_PATH=$(jq -r ".\"$plugin\".installPath" "$PLUGINS_JSON")
-    VERSION=$(jq -r ".\"$plugin\".version" "$PLUGINS_JSON")
 
     echo ""
-    echo "Installing $NAME ($VERSION)"
+    echo "Installing $plugin"
 
     TMP_DIR="/tmp/plugin-$plugin"
     rm -rf "$TMP_DIR"
@@ -42,55 +54,21 @@ for plugin in $(jq -r 'keys[]' "$PLUGINS_JSON"); do
     echo "Extracting..."
     unzip -q plugin.zip
 
-    SRC="$TMP_DIR/$EXTRACT_PATH"
-    DEST="$SERVER_DIR/$INSTALL_PATH"
-
-    if [ ! -d "$SRC" ]; then
-        echo "Extraction path $EXTRACT_PATH not found for $plugin"
-        continue
-    fi
-
-    mkdir -p "$DEST"
-
-    ########################################
-    # Copy plugin DLLs
-    ########################################
-    echo "Copying plugin DLLs..."
-    for dll in $(find "$SRC" -name "*.dll"); do
-        PLUGIN_NAME=$(basename "$dll" .dll)
-        PLUGIN_DEST="$DEST/$PLUGIN_NAME"
-        mkdir -p "$PLUGIN_DEST"
-        cp "$dll" "$PLUGIN_DEST/"
-        # copy pdb if exists
-        if [ -f "${dll%.dll}.pdb" ]; then
-            cp "${dll%.dll}.pdb" "$PLUGIN_DEST/"
-        fi
-        echo "Installed plugin: $PLUGIN_NAME"
-    done
-
     ########################################
     # copyPaths support
     ########################################
     jq -c ".\"$plugin\".copyPaths[]?" "$PLUGINS_JSON" | while read -r path; do
         FROM=$(echo "$path" | jq -r '.from')
         TO=$(echo "$path" | jq -r '.to')
-        SRC_PATH="$SRC/$FROM"
+        SRC_PATH="$TMP_DIR/$FROM"
         DEST_PATH="$SERVER_DIR/$TO"
         if [ -d "$SRC_PATH" ]; then
-            echo "Copying from $SRC_PATH to $DEST_PATH..."
+            echo "Copying from $FROM to $TO..."
             mkdir -p "$DEST_PATH"
             cp -r "$SRC_PATH/"* "$DEST_PATH/"
         else
-            echo "Warning: copyPaths source $SRC_PATH does not exist!"
+            echo "Warning: copyPaths source $FROM not found in extracted archive!"
         fi
-    done
-
-    ########################################
-    # Post install commands
-    ########################################
-    echo "Running post-install commands..."
-    jq -r ".\"$plugin\".postInstall[]?" "$PLUGINS_JSON" | while read -r cmd; do
-        eval "$cmd"
     done
 
     cd /tmp

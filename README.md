@@ -25,19 +25,31 @@ chmod +x install.sh
 
 ## Plugins
 
-Plugins are defined in `plugins.json`.
+Plugins are defined in `plugins.json`. Each plugin entry requires:
+- `url`: Direct download link to the plugin zip file
+- `enabled`: Boolean to enable/disable the plugin
+- `copyPaths`: Array of copy operations to extract and place files
 
 Example:
 
-```
+```json
 {
   "retakes": {
-    "url": "https://example.com/plugin.zip"
+    "url": "https://github.com/B3none/cs2-retakes/releases/download/3.0.3/RetakesPlugin-3.0.3.zip",
+    "enabled": true,
+    "copyPaths": [
+      { "from": "plugins", "to": "addons/counterstrikesharp/plugins" },
+      { "from": "shared", "to": "csgo/addons/counterstrikesharp/plugins/shared" }
+    ]
   }
 }
 ```
 
-Edit this file to add or change plugins and rerun the installer.
+To manage plugins:
+- Edit `plugins.json` to add, remove, or modify plugins
+- Set `"enabled": true` or `"enabled": false` to control which plugins are installed
+- Update `copyPaths` to specify where files should be extracted from the zip and placed in the server directory
+- Rerun the installer to apply changes
 
 ## Server location
 

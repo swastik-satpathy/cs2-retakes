@@ -12,12 +12,19 @@ echo "Installing CounterStrikeSharp..."
 (
     cd /tmp
 
+    # clean old files so unzip doesn't prompt for existing extracted entries
+    rm -rf cssharp.zip addons
+
+    # pick one release artifact (with-runtime preferred) to avoid downloading two archives into one file
     LATEST=$(curl -s https://api.github.com/repos/roflmuffin/CounterStrikeSharp/releases/latest \
-     | jq -r '.assets[] | select(.name|test("linux")) | .browser_download_url')
+     | jq -r '.assets[] | select(.name | test("with-runtime-linux") or test("linux")) | .browser_download_url' \
+     | head -n 1)
 
-    wget $LATEST -O cssharp.zip
+    echo "Download URL: $LATEST"
 
-    unzip cssharp.zip
+    wget -q --show-progress "$LATEST" -O cssharp.zip
+
+    unzip -o -qq cssharp.zip
 
     cp -r addons /home/cs2server/serverfiles/game/csgo/
 )

@@ -15,9 +15,9 @@ echo "Installing CounterStrikeSharp..."
     LATEST=$(curl -s https://api.github.com/repos/roflmuffin/CounterStrikeSharp/releases/latest \
      | jq -r '.assets[] | select(.name|test("linux")) | .browser_download_url')
 
-    wget -q $LATEST -O cssharp.zip
+    wget $LATEST -O cssharp.zip
 
-    unzip -o -qq cssharp.zip
+    unzip cssharp.zip
 
     cp -r addons /home/cs2server/serverfiles/game/csgo/
 )

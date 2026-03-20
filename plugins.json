@@ -26,7 +26,7 @@
   },
   "rtv": {
     "url": "https://github.com/Oz-Lin/cs2-rockthevote/releases/download/v1.9.6/RockTheVote-v1.9.6.RELEASE.zip",
-    "enabled": false,
+    "enabled": true,
     "folders": ["plugins"],
     "copyPaths": [
       { "from": ".", "to": "addons/counterstrikesharp/plugins" }
